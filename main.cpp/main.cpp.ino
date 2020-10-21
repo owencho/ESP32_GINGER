@@ -1,7 +1,7 @@
 //include file
 #include "Arduino.h"
 #include "Esp.h"
-#include <WiFi.h>
+#include <WiFi.h> 
 #include <WiFiClient.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
@@ -9,7 +9,7 @@
 
 const char* ssid = "VB77";
 const char* password = "Bottas4LifeVB77";
-DynamicJsonDocument data1(512);
+StaticJsonDocument<200> staticJsonData;
 WebServer server(80);
 //setRoom 
 void setLED(){
@@ -52,7 +52,12 @@ void setLED(){
                   Serial.print(F("\n done."));
                   return;
                 }
-                data1["type"] = doc["type"]; 
+                String id = doc["id"];
+                JsonObject root = staticJsonData.to<JsonObject>();
+                JsonObject obj = root.createNestedObject(id);
+                obj["id"]= doc["id"];
+                obj["name"]= doc["name"];
+                obj["type"]= doc["type"];
                 
                 Serial.print(F("\n Type:"));
                 Serial.printf(doc["type"]);
@@ -61,6 +66,9 @@ void setLED(){
                 // To get the status of the result you can get the http status so
                 // this part can be unusefully
                 DynamicJsonDocument doc(512);
+                doc["id"] =   root["LED1"]["id"];
+                doc["name"] = root[id]["name"];
+                doc["type"] = root[id]["type"];
                 doc["status"] = "OK";
                 String buf;
                 serializeJson(doc, buf);
@@ -83,16 +91,42 @@ void setLED(){
     }
 }
 //getSetting
-/*
+
 void getLED(){
-    StaticJsonDocument doc(512);
-    Serial.print(F("Stream..."));
+    int statusCode;
     String buf;
+    DynamicJsonDocument doc(512);
+    Serial.print(F("Stream..."));
+    String id = server.arg("id");
+    //get JsonObject
+    JsonObject root = staticJsonData.to<JsonObject>();
+    /*
+      if(strcmp(idName,"all")){
+        doc = staticJsonData;
+      }
+      else if(!idObject.isNull()){
+        doc["id"] = idObject["id"];
+        doc["name"] = idObject["name"];
+        doc["type"] = idObject["type"];
+        statusCode = 200;
+      }
+      else{
+        doc["status"] = "KO";
+        doc["message"] = F("No data found, or incorrect!");
+        statusCode = 400;
+      }
+     */
+    doc["id"] = root["LED1"]["id"];
+    doc["name"] = root["LED1"]["name"];
+    doc["type"] = root["LED1"]["type"];
+    doc["status"] = "KO";
+    doc["message"] = F("No data found, or incorrect!");
+    statusCode = 400;
     serializeJson(doc, buf);
-    server.send(200, F("application/json"), buf);
+    server.send(statusCode, F("application/json"), buf);
     Serial.print(F("done."));
 }
-*/
+
 void getSettings(){
     DynamicJsonDocument doc(512);
     doc["ip"] = WiFi.localIP().toString();
@@ -132,7 +166,7 @@ void restServerRouting() {
     //edit here to have the sub root folder
     server.on(F("/helloWorld"), HTTP_GET, getHelloWorld);
     server.on(F("/settings"), HTTP_GET, getSettings);
-    //server.on(F("/getLED"), HTTP_GET, getLED);
+    server.on(F("/getLED"), HTTP_GET, getLED);
     //POST
     server.on(F("/setLED"), HTTP_POST, setLED);
 }
