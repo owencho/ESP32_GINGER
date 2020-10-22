@@ -38,7 +38,6 @@ void setLED() {
     String postBody = server.arg("plain");
     Serial.println(postBody);
     DynamicJsonDocument doc(512);
-    DynamicJsonDocument savedDoc(512);
     DeserializationError error = deserializeJson(doc, postBody);
     if (error) {
       generateJsonError(error);
@@ -62,30 +61,15 @@ void setLED() {
           generateReturnError("KO","Error input");
           return;
         }
-        String id = doc["id"];
-        //
-        DeserializationError error = deserializeJson(jsonBuffer, jsonData);
-        JsonObject root = jsonBuffer.to<JsonObject>();
-        JsonObject obj = root.createNestedObject(id);
-        obj["id"] =   doc["id"];
-        obj["name"] = doc["name"];
-        obj["type"] = doc["type"];
-        jsonBuffer.add(obj);
-        Serial.print(F("\n Type:"));
-        Serial.printf(doc["type"]);
-        Serial.print(F("\n Id:"));
-        Serial.print(id);
         // Create the response
         // To get the status of the result you can get the http status so
         // this part can be unusefully
-        DynamicJsonDocument doc(512);
+        //DynamicJsonDocument doc(512);
         
         doc["status"] = "OK";
         
         String buf;
-        serializeJson(jsonBuffer, buf);
-        int str_len = buf.length() +1;
-        buf.toCharArray(jsonData,str_len);
+        serializeJson(doc, buf);
         server.send(201, F("application/json"), buf);
         Serial.print(F("\n done."));
       
