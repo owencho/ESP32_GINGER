@@ -155,11 +155,11 @@ void restServerRouting() {
                   F("Welcome to the REST Web Server"));
     });
     //edit here to have the sub root folder
-    server.on(F("/helloWorld"), HTTP_GET, getHelloWorld);
-    server.on(F("/settings"), HTTP_GET, getSettings);
+    server.on(F("/v1/helloWorld"), HTTP_GET, getHelloWorld);
+    server.on(F("/v1/settings"), HTTP_GET, getSettings);
     //server.on(F("/getLED"), HTTP_GET, getLED);
     //POST
-    server.on(F("/setLED"), HTTP_POST, setLED);
+    server.on(F("/v1/setLED"), HTTP_POST, setLED);
 }
 
 // Manage not found URL
@@ -196,14 +196,18 @@ void setup(void) {
     Serial.println(ssid);
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
+    
     //create root for json
     //set pin 2 LED as output
     pinMode(2, OUTPUT);
+    
     // Set server routing
     restServerRouting();
+    
     // Set not found response
     server.onNotFound(handleNotFound);
     // Start server
+    
     server.begin();
     Serial.println("HTTP server started");
 }
