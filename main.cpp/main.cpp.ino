@@ -32,7 +32,17 @@ void generateJsonError(DeserializationError error){
     server.send(400, F("text/html"),
                 "Error in parsin json body! " + msg);
 }
-
+void generateReturnMessage(int statusCode , char * message){
+    DynamicJsonDocument doc(512);
+    doc["status"] = statusCode;
+    doc["message"] = message;
+    //send error message
+    Serial.print(F("\n Stream..."));
+    String buf;
+    serializeJson(doc, buf);
+    server.send(statusCode, F("application/json"), buf);
+    Serial.print(F("done. \n"));
+}
 
 void generateReturnError(char * status , char * message){
     DynamicJsonDocument doc(512);
@@ -46,6 +56,7 @@ void generateReturnError(char * status , char * message){
     Serial.print(F("done."));
 }
 //setRoom
+/*
 void setLED() {
     String postBody = server.arg("plain");
     Serial.println(postBody);
@@ -84,7 +95,7 @@ void setLED() {
           generateReturnError("KO","Error input");
           return;
         }
-        */
+        
         //create return json data
         generateOkReturn();
       
@@ -130,7 +141,86 @@ void setIntensity() {
       }
     }
 }
+*/
+void setLedNode() {
+    char intensity;
+    String postBody = server.arg("plain");
+    Serial.println(postBody);
+    const size_t capacity = 4*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 120;
+    DynamicJsonDocument doc(capacity);
+    DeserializationError error = deserializeJson(doc, postBody);
+  
+    if (error) {
+      generateReturnMessage(400,"JSON malformed");
+    } 
+    
+    else {
+      JsonObject postObj = doc.as<JsonObject>();
+      if (postObj.containsKey("address")) {
+        if(postObj["address"] != 1){
+          generateReturnMessage(404,"Address unavailable");
+          return;
+        }
+        
+        if(postObj.containsKey("led state")){
+          if(postObj["led state"]["red"]){
+            if(postObj["led state"]["red"]["power"]){
+              if (!strcmp(postObj["led state"]["red"]["power"], "ON")) {
+                digitalWrite(33, HIGH);
+              }
+              else if (!strcmp(postObj["led state"]["red"]["power"], "OFF")) {
+                digitalWrite(33, LOW);
+              }
+            }
+            if(postObj["led state"]["red"]["intensity"]){
+            int redInt = postObj["led state"]["red"]["intensity"];
+            Serial.print(F("\n red Intensity :"));
+            Serial.print(redInt);
+            }
+          }
+         
+         if(postObj["led state"]["blue"]){
+          if(postObj["led state"]["blue"]["power"]){
+            if (!strcmp(postObj["led state"]["blue"]["power"], "ON")) {
+              digitalWrite(2, HIGH);
+            }
+            else if (!strcmp(postObj["led state"]["blue"]["power"], "OFF")) {
+              digitalWrite(2, LOW);
+            }
+          }
+          if(postObj["led state"]["blue"]["intensity"]){
+            int blueInt = postObj["led state"]["blue"]["intensity"];
+            Serial.print(F("\n blue Intensity :"));
+            Serial.print(blueInt);
+          }
+        }
+
+        if(postObj["led state"]["green"]){
+          if(postObj["led state"]["green"]["power"]){
+            if (!strcmp(postObj["led state"]["green"]["power"], "ON")) {
+              digitalWrite(32, HIGH);
+            }
+            else if (!strcmp(postObj["led state"]["green"]["power"], "OFF")) {
+              digitalWrite(32, LOW);
+            }
+          }
+          if(postObj["led state"]["green"]["intensity"]){
+            int greenInt = postObj["led state"]["green"]["intensity"];
+            Serial.print(F("\n green Intensity:"));
+            Serial.print(greenInt);
+          }
+        }
+      }
+       //create return json data
+        generateReturnMessage(200,"OK");
+    }
+    else {
+      generateReturnMessage(406,"No address given");
+    }
+  }
+}
 //GET
+/*
 void getCurrent() {
     DynamicJsonDocument doc(512);
     String address;
@@ -241,13 +331,14 @@ void restServerRouting() {
                   F("Welcome to the REST Web Server"));
     });
     //edit here to have the sub root folder
-    server.on(F("/v1/getCurrent"), HTTP_GET, getCurrent);
-    server.on(F("/v1/getVoltage"), HTTP_GET, getVoltage);
-    server.on(F("/v1/getLEDStatus"), HTTP_GET, getLEDStatus);
+    //server.on(F("/v1/getCurrent"), HTTP_GET, getCurrent);
+    //server.on(F("/v1/getVoltage"), HTTP_GET, getVoltage);
+    //server.on(F("/v1/getLEDStatus"), HTTP_GET, getLEDStatus);
 
     //v1
-    server.on(F("/v1/setLED"), HTTP_POST, setLED);
-    server.on(F("/v1/setIntensity"), HTTP_POST, setIntensity);
+    //server.on(F("/v1/setLED"), HTTP_POST, setLED);
+    //server.on(F("/v1/setIntensity"), HTTP_POST, setIntensity);
+    server.on(F("/v1/set_led_node"), HTTP_POST, setLedNode);
 }
 
 // Manage not found URL
@@ -288,7 +379,8 @@ void setup(void) {
     //create root for json
     //set pin 2 LED as output
     pinMode(2, OUTPUT);
-    
+    pinMode(32, OUTPUT);
+    pinMode(33, OUTPUT);
     // Set server routing
     restServerRouting();
     
