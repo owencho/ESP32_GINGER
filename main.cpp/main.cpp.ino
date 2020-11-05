@@ -1,5 +1,6 @@
 //include file
 #include "Arduino.h"
+#include "LedStruct.h"
 #include "Esp.h"
 #include <WiFi.h>
 #include <WiFiClient.h>
@@ -9,8 +10,19 @@
 
 const char* ssid = "VB77";
 const char* password = "Bottas4LifeVB77";
+
+LedStruct ledData[32];
 WebServer server(80);
 
+void generateOkReturn(void){
+    DynamicJsonDocument doc(512);
+    doc["status"] = "OK";
+    
+    String buf;
+    serializeJson(doc, buf);
+    server.send(201, F("application/json"), buf);
+    Serial.print(F("\n done."));
+}
 void generateJsonError(DeserializationError error){
     // if the file didn't open, print an error:
     Serial.print(F("Error parsing JSON "));
@@ -44,12 +56,23 @@ void setLED() {
     } 
     else {
       JsonObject postObj = doc.as<JsonObject>();
-      Serial.print(F("HTTP Method: "));
-      Serial.println(server.method());
-      if (postObj.containsKey("name") && postObj.containsKey("type")) {
+      if (postObj.containsKey("address")) {
       
         Serial.println(F("done."));
-        
+
+        if(postObj.containsKey("red")){
+          Serial.print(F("\n Red:"));
+          Serial.printf(doc["red"]);
+        }
+        if(postObj.containsKey("green")){
+          Serial.print(F("\n Green:"));
+          Serial.printf(doc["green"]);
+        }
+        if(postObj.containsKey("blue")){
+          Serial.print(F("\n Blue:"));
+          Serial.printf(doc["blue"]);
+        }
+        /*
         // Here store data or doing operation
         if (!strcmp(doc["type"], "HIGH")) {
           digitalWrite(2, HIGH);
@@ -61,17 +84,9 @@ void setLED() {
           generateReturnError("KO","Error input");
           return;
         }
-        // Create the response
-        // To get the status of the result you can get the http status so
-        // this part can be unusefully
-        //DynamicJsonDocument doc(512);
-        
-        doc["status"] = "OK";
-        
-        String buf;
-        serializeJson(doc, buf);
-        server.send(201, F("application/json"), buf);
-        Serial.print(F("\n done."));
+        */
+        //create return json data
+        generateOkReturn();
       
       }
       else {
@@ -79,64 +94,134 @@ void setLED() {
       }
     }
 }
-//getSetting
-/*
-void getLED() {
-    int statusCode;
-    String buf;
+
+void setIntensity() {
+    String postBody = server.arg("plain");
+    Serial.println(postBody);
     DynamicJsonDocument doc(512);
-    Serial.print(F("Stream..."));
-    String id = server.arg("id");
-    //get JsonObject
-    DeserializationError error = deserializeJson(jsonBuffer, jsonData);
-    JsonObject root = jsonBuffer.to<JsonObject>();
-    /*
-      if(strcmp(idName,"all")){
-        doc = staticJsonData;
+    DeserializationError error = deserializeJson(doc, postBody);
+    if (error) {
+      generateJsonError(error);
+    } 
+    else {
+      JsonObject postObj = doc.as<JsonObject>();
+      if (postObj.containsKey("address")) {
+       
+        Serial.println(F("done."));
+        
+        if(postObj.containsKey("red")){
+          Serial.print(F("\n Red:"));
+          Serial.printf(doc["red"]);
+        }
+        if(postObj.containsKey("green")){
+          Serial.print(F("\n Green:"));
+          Serial.printf(doc["green"]);
+        }
+        if(postObj.containsKey("blue")){
+          Serial.print(F("\n Blue:"));
+          Serial.printf(doc["blue"]);
+        }
+        //create return json data
+        generateOkReturn();
+      
       }
-      else if(!idObject.isNull()){
-        doc["id"] = idObject["id"];
-        doc["name"] = idObject["name"];
-        doc["type"] = idObject["type"];
-        statusCode = 200;
+      else {
+        generateReturnError("KO","Invalid input");
+      }
+    }
+}
+//GET
+void getCurrent() {
+    DynamicJsonDocument doc(512);
+    String address;
+    if (server.hasArg("address")) {
+      address = server.arg("address");
+      int addressValue=address.toInt();  
+      if(ledData[addressValue].ledConnectionStatus){
+          doc["address"] = address;
+          doc["current"] = "1234";
+          Serial.print(F("Stream..."));
+          String buf;
+          serializeJson(doc, buf);
+          server.send(200, F("application/json"), buf);
+          Serial.print(F("done."));
       }
       else{
-        doc["status"] = "KO";
-        doc["message"] = F("No data found, or incorrect!");
-        statusCode = 400;
+          generateReturnError("KO","LED offline");
       }
-    
-    doc["id"] = root["LED1"]["id"];
-    doc["name"] = root["LED1"]["name"];
-    doc["type"] = root["LED1"]["type"];
-    doc["status"] = "KO";
-    doc["message"] = F("No data found, or incorrect!");
-    statusCode = 400;
-    //serializeJson(jsonBuffer, buf);
-    serializeJson(jsonBuffer, buf);
-    server.send(statusCode, F("application/json"), buf);
-    Serial.print(F("done."));
+    }
+    else{
+      generateReturnError("KO","Invalid args");
+    }
+}
+
+void getVoltage() {
+    DynamicJsonDocument doc(512);
+    String address;
+    if (server.hasArg("address")) {
+      address = server.arg("address");
+      int addressValue=address.toInt();  
+      if(ledData[addressValue].ledConnectionStatus){
+          doc["address"] = address;
+          doc["voltage"] = "1234";
+          Serial.print(F("Stream..."));
+          String buf;
+          serializeJson(doc, buf);
+          server.send(200, F("application/json"), buf);
+          Serial.print(F("done."));
+      }
+      else{
+          generateReturnError("KO","LED offline");
+      }
+    }
+    else{
+      generateReturnError("KO","Invalid args");
+    }
+}
+
+void getLEDStatus() {
+    DynamicJsonDocument doc(512);
+    String address;
+    if (server.hasArg("address")) {
+      address = server.arg("address");
+      int addressValue=address.toInt();  
+      if(ledData[addressValue].ledConnectionStatus){
+          doc["name"] = ledData[addressValue].name;
+          doc["address"] = address;
+          doc["RED status"] = ledData[addressValue].r_status;
+          doc["RED intensity"] = ledData[addressValue].r_intensity;
+          doc["Green status"] = ledData[addressValue].g_status;
+          doc["Green intensity"] = ledData[addressValue].g_intensity;
+          doc["Blue status"] = ledData[addressValue].b_status;
+          doc["Blue intensity"] = ledData[addressValue].b_intensity;
+          Serial.print(F("Stream..."));
+          String buf;
+          serializeJson(doc, buf);
+          server.send(200, F("application/json"), buf);
+          Serial.print(F("done."));
+      }
+      else{
+          generateReturnError("KO","LED offline");
+      }
+    }
+    else{
+      generateReturnError("KO","Invalid args");
+    }
+}
+/*
+void enableLED() {
+    DynamicJsonDocument doc(512);
+    String address;
+    if (server.hasArg("address")) {
+      address = server.arg("address");
+      int addressValue=address.toInt();  
+      if(addressValue >
+      ledData[addressValue].ledConnectionStatus = ON;
+    else{
+      generateReturnError("KO","Invalid args");
+    }
 }
 */
-void getSettings() {
-    DynamicJsonDocument doc(512);
-    doc["ip"] = WiFi.localIP().toString();
-    doc["gw"] = WiFi.gatewayIP().toString();
-    doc["nm"] = WiFi.subnetMask().toString();
-    if (server.arg("signalStrength") == "true") {
-      doc["signalStrengh"] = WiFi.RSSI();
-    }
-  
-    if (server.arg("freeHeap") == "true") {
-      doc["freeHeap"] = ESP.getFreeHeap();
-    }
-  
-    Serial.print(F("Stream..."));
-    String buf;
-    serializeJson(doc, buf);
-    server.send(200, F("application/json"), buf);
-    Serial.print(F("done."));
-}
 //serve hello world
 void getHelloWorld() {
     DynamicJsonDocument doc(512);
@@ -148,6 +233,7 @@ void getHelloWorld() {
     server.send(200, "application/json", buf);
     Serial.print(F("done."));
 }
+
 // Define routing
 void restServerRouting() {
     server.on("/", HTTP_GET, []() {
@@ -155,11 +241,13 @@ void restServerRouting() {
                   F("Welcome to the REST Web Server"));
     });
     //edit here to have the sub root folder
-    server.on(F("/v1/helloWorld"), HTTP_GET, getHelloWorld);
-    server.on(F("/v1/settings"), HTTP_GET, getSettings);
-    //server.on(F("/getLED"), HTTP_GET, getLED);
-    //POST
+    server.on(F("/v1/getCurrent"), HTTP_GET, getCurrent);
+    server.on(F("/v1/getVoltage"), HTTP_GET, getVoltage);
+    server.on(F("/v1/getLEDStatus"), HTTP_GET, getLEDStatus);
+
+    //v1
     server.on(F("/v1/setLED"), HTTP_POST, setLED);
+    server.on(F("/v1/setIntensity"), HTTP_POST, setIntensity);
 }
 
 // Manage not found URL
