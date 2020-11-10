@@ -14,24 +14,6 @@ const char* password = "Bottas4LifeVB77";
 LedStruct ledData[32];
 WebServer server(80);
 
-void generateOkReturn(void){
-    DynamicJsonDocument doc(512);
-    doc["status"] = "OK";
-    
-    String buf;
-    serializeJson(doc, buf);
-    server.send(201, F("application/json"), buf);
-    Serial.print(F("\n done."));
-}
-void generateJsonError(DeserializationError error){
-    // if the file didn't open, print an error:
-    Serial.print(F("Error parsing JSON "));
-    Serial.println(error.c_str());
-
-    String msg = error.c_str();
-    server.send(400, F("text/html"),
-                "Error in parsin json body! " + msg);
-}
 void generateReturnMessage(int statusCode , char * message){
     DynamicJsonDocument doc(512);
     doc["status"] = statusCode;
@@ -44,17 +26,6 @@ void generateReturnMessage(int statusCode , char * message){
     Serial.print(F("done. \n"));
 }
 
-void generateReturnError(char * status , char * message){
-    DynamicJsonDocument doc(512);
-    doc["status"] = status;
-    doc["message"] = message;
-    //send error message
-    Serial.print(F("Stream..."));
-    String buf;
-    serializeJson(doc, buf);
-    server.send(400, F("application/json"), buf);
-    Serial.print(F("done."));
-}
 //setRoom
 /*
 void setLED() {
@@ -220,6 +191,48 @@ void setLedNode() {
   }
 }
 //GET
+void getElectricalParameter() {
+  DynamicJsonDocument doc(512);
+  String address;
+  if (server.hasArg("address")) {
+    address = server.arg("address");
+    int addressValue=address.toInt();  
+    if(addressValue == 1){
+      int voltageAdcValue = analogRead(34);
+      int currentAdcValue = analogRead(35);
+      Serial.print(voltageAdcValue);
+      double current = currentAdcValue * (5.0/4097.0);
+      double voltage = voltageAdcValue * (80.0/4097.0);
+      double power = current*voltage;
+      Serial.print(voltage);
+      doc["current"] = current;
+      doc["voltage"] = voltage; 
+      doc["power"] = power;
+      Serial.print(F("Stream..."));
+      String buf;
+      serializeJson(doc, buf);
+      server.send(200, F("application/json"), buf);
+      Serial.print(F("done."));
+    }
+    else{
+      generateReturnMessage(404,"Address unavailable");
+    }
+  }
+  else{
+    generateReturnMessage(406,"No address given");
+  }
+}
+/*
+double convertCurrent(){
+  int adcValue = analogRead(34);
+  return adcValue * (5/4097);
+}
+
+double convertVoltage(){
+  int adcValue = analogRead(35);
+  return adcValue * (80/4097);
+}
+*/
 /*
 void getCurrent() {
     DynamicJsonDocument doc(512);
@@ -334,6 +347,7 @@ void restServerRouting() {
     //server.on(F("/v1/getCurrent"), HTTP_GET, getCurrent);
     //server.on(F("/v1/getVoltage"), HTTP_GET, getVoltage);
     //server.on(F("/v1/getLEDStatus"), HTTP_GET, getLEDStatus);
+    server.on(F("/v1/get_electrical_parameter"), HTTP_GET, getElectricalParameter);
 
     //v1
     //server.on(F("/v1/setLED"), HTTP_POST, setLED);
@@ -391,7 +405,10 @@ void setup(void) {
     server.begin();
     Serial.println("HTTP server started");
 }
-
+int potValue = 0;
 void loop(void) {
     server.handleClient();
+    //potValue = analogRead(35);
+    //Serial.println(potValue);
+    //delay(500);
 }
