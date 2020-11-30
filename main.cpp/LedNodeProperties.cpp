@@ -22,39 +22,21 @@ void setProperties() {
   else {
     JsonObject postObj = doc.as<JsonObject>();
     if(postObj.containsKey("tag_with_time")){
-        if(!postObj["tag_with_time"].is<String>()){
+        if(!postObj["tag_with_time"].is<boolean>()){
           generateReturnMessage(406,"Incorrect field type");
           return;
         }
         else{
-          if(postObj["tag_with_time"]== "true"){
-            ledControllerProperties.tagWithTime = 1;
-          }
-          else if(postObj["tag_with_time"]== "false"){
-            ledControllerProperties.tagWithTime = 0;
-          }
-          else{
-            generateReturnMessage(406,"Incorrect field type");
-            return;
-          }
+          ledControllerProperties.tagWithTime = postObj["tag_with_time"];
         }
      }
      if(postObj.containsKey("overheating_recovery")){
-        if(!postObj["overheating_recovery"].is<String>()){
+        if(!postObj["overheating_recovery"].is<boolean>()){
           generateReturnMessage(406,"Incorrect field type");
           return;
         }
         else{
-          if(postObj["overheating_recovery"]== "true"){
-            ledControllerProperties.overHeatingRecovery = 1;
-          }
-          else if(postObj["overheating_recovery"]== "false"){
-            ledControllerProperties.overHeatingRecovery = 0;
-          }
-          else{
-            generateReturnMessage(406,"Incorrect field type");
-            return;
-          }
+          ledControllerProperties.overHeatingRecovery = postObj["overheating_recovery"];
         }
      }
      generateReturnMessage(200,"OK");
@@ -62,9 +44,9 @@ void setProperties() {
 }
 
 void getProperties() {
-  DynamicJsonDocument doc(512);
-  doc["tag_with_time"] = getBooleanString(ledControllerProperties.tagWithTime);
-  doc["overheating_recovery"] = getBooleanString(ledControllerProperties.overHeatingRecovery);
+  DynamicJsonDocument doc(JSON_OBJECT_SIZE(4));
+  doc["tag_with_time"] = ledControllerProperties.tagWithTime;
+  doc["overheating_recovery"] = ledControllerProperties.overHeatingRecovery;
   String buf;
   serializeJson(doc, buf);
   server.send(200, F("application/json"), buf);

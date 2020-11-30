@@ -16,7 +16,7 @@ void setTime() {
   int currentLoc = 0;
   String postBody = server.arg("plain");
   Serial.println(postBody);
-  const size_t capacity = 4*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 120;
+  const size_t capacity = 2*JSON_OBJECT_SIZE(1) + 20;
   DynamicJsonDocument doc(capacity);
   DeserializationError error = deserializeJson(doc, postBody);
   

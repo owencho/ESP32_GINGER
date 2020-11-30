@@ -19,15 +19,12 @@ struct LedStruct {
   int r_intensity;
   int g_intensity;
   int b_intensity;
-  int r_status;
-  int g_status;
-  int b_status;
 };
 
 typedef struct ControllerProperties ControllerProperties;
 struct ControllerProperties {
-  int tagWithTime;
-  int overHeatingRecovery;
+  boolean tagWithTime;
+  boolean overHeatingRecovery;
 };
 
 #endif // LedStruct_h

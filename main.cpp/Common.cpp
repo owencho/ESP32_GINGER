@@ -2,17 +2,9 @@
 #include "Common.h"
 #include <ArduinoJson.h>
 extern WebServer server;
-String getBooleanString(int value){
-  if(value){
-    return "true";
-  }
-  else{
-    return "false";
-  }
-}
 
 void generateReturnMessage(int statusCode , char * message){
-    DynamicJsonDocument doc(512);
+    DynamicJsonDocument doc(JSON_OBJECT_SIZE(4));
     doc["status"] = statusCode;
     doc["message"] = message;
     //send error message
