@@ -24,6 +24,18 @@ set<int> ledSet;
 WebServer server(80);
 ControllerProperties ledControllerProperties;
 
+void getLedNode(){
+    DynamicJsonDocument doc(512);
+    doc["status"][0] = 1;
+    doc["status"][1] = 2;
+    //send error message
+    Serial.print(F("\n Stream..."));
+    String buf;
+    serializeJson(doc, buf);
+    server.send(200, F("application/json"), buf);
+    Serial.print(F("done. \n"));
+}
+
 // Define routing
 void restServerRouting() {
   server.on("/", HTTP_GET, []() {
@@ -35,6 +47,7 @@ void restServerRouting() {
   server.on(F("/v1/get_electrical_parameter"), HTTP_GET, getElectricalParameter);
   server.on(F("/v1/get_temperature"), HTTP_GET, getLEDTemp);
   server.on(F("/v1/get_properties"), HTTP_GET, getProperties);
+  server.on(F("/v1/get_led_node"), HTTP_GET, getLedNode);
   //POST
   server.on(F("/v1/set_led_node"), HTTP_POST, setLedNode);
   server.on(F("/v1/set_time"), HTTP_POST, setTime);
