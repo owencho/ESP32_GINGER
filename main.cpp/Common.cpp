@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "Common.h"
 #include <ArduinoJson.h>
-WebServer server(80);
+extern WebServer server;
 String getBooleanString(int value){
   if(value){
     return "true";

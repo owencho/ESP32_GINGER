@@ -11,9 +11,7 @@ typedef enum{
 
 typedef struct LedStruct LedStruct;
 struct LedStruct {
-  int address;
-  char name[30];
-  int ledAvailability;
+  String name;
   LEDConnectionStatus ledConnectionStatus;
   LEDStatus r_status;
   LEDStatus g_status;
@@ -21,6 +19,9 @@ struct LedStruct {
   int r_intensity;
   int g_intensity;
   int b_intensity;
+  int r_status;
+  int g_status;
+  int b_status;
 };
 
 typedef struct ControllerProperties ControllerProperties;

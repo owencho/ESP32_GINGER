@@ -5,7 +5,8 @@
 #include "Common.h"
 #include <ArduinoJson.h>
 #include <WebServer.h>
-WebServer server(80);
+extern WebServer server;
+extern ControllerProperties ledControllerProperties;
 void setLedNode() {
     char intensity;
     String postBody = server.arg("plain");
