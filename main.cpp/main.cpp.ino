@@ -2,119 +2,23 @@
 #include "Arduino.h"
 #include "LedStruct.h"
 #include "Esp.h"
-#include <WiFi.h>
+#include "SetLedNode.h"
+#include "Common.h"
+#include "LedNodeProperties.h"
+#include <time.h>
+#include <sys/time.h>
 #include <WiFiClient.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <ArduinoJson.h>
-
+using namespace std;
 const char* ssid = "VB77";
 const char* password = "Bottas4LifeVB77";
-
-LedStruct ledData[32];
 WebServer server(80);
-
-void generateReturnMessage(int statusCode , char * message){
-    DynamicJsonDocument doc(512);
-    doc["status"] = statusCode;
-    doc["message"] = message;
-    //send error message
-    Serial.print(F("\n Stream..."));
-    String buf;
-    serializeJson(doc, buf);
-    server.send(statusCode, F("application/json"), buf);
-    Serial.print(F("done. \n"));
-}
-
-//setRoom
-/*
-void setLED() {
-    String postBody = server.arg("plain");
-    Serial.println(postBody);
-    DynamicJsonDocument doc(512);
-    DeserializationError error = deserializeJson(doc, postBody);
-    if (error) {
-      generateJsonError(error);
-    } 
-    else {
-      JsonObject postObj = doc.as<JsonObject>();
-      if (postObj.containsKey("address")) {
-      
-        Serial.println(F("done."));
-
-        if(postObj.containsKey("red")){
-          Serial.print(F("\n Red:"));
-          Serial.printf(doc["red"]);
-        }
-        if(postObj.containsKey("green")){
-          Serial.print(F("\n Green:"));
-          Serial.printf(doc["green"]);
-        }
-        if(postObj.containsKey("blue")){
-          Serial.print(F("\n Blue:"));
-          Serial.printf(doc["blue"]);
-        }
-        /*
-        // Here store data or doing operation
-        if (!strcmp(doc["type"], "HIGH")) {
-          digitalWrite(2, HIGH);
-        }
-        else if (!strcmp(doc["type"], "LOW")) {
-          digitalWrite(2, LOW);
-        }
-        else {
-          generateReturnError("KO","Error input");
-          return;
-        }
-        
-        //create return json data
-        generateOkReturn();
-      
-      }
-      else {
-        generateReturnError("KO","Invalid input");
-      }
-    }
-}
-
-void setIntensity() {
-    String postBody = server.arg("plain");
-    Serial.println(postBody);
-    DynamicJsonDocument doc(512);
-    DeserializationError error = deserializeJson(doc, postBody);
-    if (error) {
-      generateJsonError(error);
-    } 
-    else {
-      JsonObject postObj = doc.as<JsonObject>();
-      if (postObj.containsKey("address")) {
-       
-        Serial.println(F("done."));
-        
-        if(postObj.containsKey("red")){
-          Serial.print(F("\n Red:"));
-          Serial.printf(doc["red"]);
-        }
-        if(postObj.containsKey("green")){
-          Serial.print(F("\n Green:"));
-          Serial.printf(doc["green"]);
-        }
-        if(postObj.containsKey("blue")){
-          Serial.print(F("\n Blue:"));
-          Serial.printf(doc["blue"]);
-        }
-        //create return json data
-        generateOkReturn();
-      
-      }
-      else {
-        generateReturnError("KO","Invalid input");
-      }
-    }
-}
-*/
-void setLedNode() {
-    char intensity;
+void setTime() {
+    int time[3];
+    int previousLoc = 0;
+    int currentLoc = 0;
     String postBody = server.arg("plain");
     Serial.println(postBody);
     const size_t capacity = 4*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 120;
@@ -124,73 +28,51 @@ void setLedNode() {
     if (error) {
       generateReturnMessage(400,"JSON malformed");
     } 
-    
     else {
       JsonObject postObj = doc.as<JsonObject>();
-      if (postObj.containsKey("address")) {
-        if(postObj["address"] != 1){
-          generateReturnMessage(404,"Address unavailable");
-          return;
+      int valueSize;
+      String strValue;
+      if (postObj.containsKey("time")) {
+        if(!postObj["time"].is<String>()){
+          generateReturnMessage(400,"Json malformed");
         }
-        
-        if(postObj.containsKey("led state")){
-          if(postObj["led state"]["red"]){
-            if(postObj["led state"]["red"]["power"]){
-              if (!strcmp(postObj["led state"]["red"]["power"], "ON")) {
-                digitalWrite(33, HIGH);
-              }
-              else if (!strcmp(postObj["led state"]["red"]["power"], "OFF")) {
-                digitalWrite(33, LOW);
-              }
-            }
-            if(postObj["led state"]["red"]["intensity"]){
-            int redInt = postObj["led state"]["red"]["intensity"];
-            Serial.print(F("\n red Intensity :"));
-            Serial.print(redInt);
-            }
+        String inputTime = postObj["time"];
+        valueSize = inputTime.length();
+        for(int i =0 ; i <3 ; i++){
+          currentLoc = inputTime.indexOf(":",previousLoc+1);
+          if(currentLoc == -1 && i != 2){
+            generateReturnMessage(406,"Incorrect clock format");
+            return;
           }
-         
-         if(postObj["led state"]["blue"]){
-          if(postObj["led state"]["blue"]["power"]){
-            if (!strcmp(postObj["led state"]["blue"]["power"], "ON")) {
-              digitalWrite(2, HIGH);
-            }
-            else if (!strcmp(postObj["led state"]["blue"]["power"], "OFF")) {
-              digitalWrite(2, LOW);
-            }
+          if(i == 0){
+            strValue = inputTime.substring(0,currentLoc);  
           }
-          if(postObj["led state"]["blue"]["intensity"]){
-            int blueInt = postObj["led state"]["blue"]["intensity"];
-            Serial.print(F("\n blue Intensity :"));
-            Serial.print(blueInt);
+          else if(i == 1){
+            strValue = inputTime.substring(previousLoc+1,currentLoc);  
           }
+          else{
+            strValue = inputTime.substring(previousLoc+1,valueSize);
+          }
+          
+          time[i] = strValue.toInt();
+          previousLoc = currentLoc;
         }
-
-        if(postObj["led state"]["green"]){
-          if(postObj["led state"]["green"]["power"]){
-            if (!strcmp(postObj["led state"]["green"]["power"], "ON")) {
-              digitalWrite(32, HIGH);
-            }
-            else if (!strcmp(postObj["led state"]["green"]["power"], "OFF")) {
-              digitalWrite(32, LOW);
-            }
-          }
-          if(postObj["led state"]["green"]["intensity"]){
-            int greenInt = postObj["led state"]["green"]["intensity"];
-            Serial.print(F("\n green Intensity:"));
-            Serial.print(greenInt);
-          }
-        }
+        struct tm tm;
+        tm.tm_hour = time[0];
+        tm.tm_min = time[1];
+        tm.tm_sec = time[2];
+        time_t t = mktime(&tm);
+        Serial.print(time[0]);
+        Serial.print(time[1]);
+        Serial.print(time[2]);
+        struct timeval now = { .tv_sec = t };
+        settimeofday(&now, NULL);
       }
-       //create return json data
-        generateReturnMessage(200,"OK");
-    }
-    else {
-      generateReturnMessage(406,"No address given");
-    }
-  }
+   }
 }
+
 //GET
+
 void getElectricalParameter() {
   DynamicJsonDocument doc(512);
   String address;
@@ -222,120 +104,6 @@ void getElectricalParameter() {
     generateReturnMessage(406,"No address given");
   }
 }
-/*
-double convertCurrent(){
-  int adcValue = analogRead(34);
-  return adcValue * (5/4097);
-}
-
-double convertVoltage(){
-  int adcValue = analogRead(35);
-  return adcValue * (80/4097);
-}
-*/
-/*
-void getCurrent() {
-    DynamicJsonDocument doc(512);
-    String address;
-    if (server.hasArg("address")) {
-      address = server.arg("address");
-      int addressValue=address.toInt();  
-      if(ledData[addressValue].ledConnectionStatus){
-          doc["address"] = address;
-          doc["current"] = "1234";
-          Serial.print(F("Stream..."));
-          String buf;
-          serializeJson(doc, buf);
-          server.send(200, F("application/json"), buf);
-          Serial.print(F("done."));
-      }
-      else{
-          generateReturnError("KO","LED offline");
-      }
-    }
-    else{
-      generateReturnError("KO","Invalid args");
-    }
-}
-
-void getVoltage() {
-    DynamicJsonDocument doc(512);
-    String address;
-    if (server.hasArg("address")) {
-      address = server.arg("address");
-      int addressValue=address.toInt();  
-      if(ledData[addressValue].ledConnectionStatus){
-          doc["address"] = address;
-          doc["voltage"] = "1234";
-          Serial.print(F("Stream..."));
-          String buf;
-          serializeJson(doc, buf);
-          server.send(200, F("application/json"), buf);
-          Serial.print(F("done."));
-      }
-      else{
-          generateReturnError("KO","LED offline");
-      }
-    }
-    else{
-      generateReturnError("KO","Invalid args");
-    }
-}
-
-void getLEDStatus() {
-    DynamicJsonDocument doc(512);
-    String address;
-    if (server.hasArg("address")) {
-      address = server.arg("address");
-      int addressValue=address.toInt();  
-      if(ledData[addressValue].ledConnectionStatus){
-          doc["name"] = ledData[addressValue].name;
-          doc["address"] = address;
-          doc["RED status"] = ledData[addressValue].r_status;
-          doc["RED intensity"] = ledData[addressValue].r_intensity;
-          doc["Green status"] = ledData[addressValue].g_status;
-          doc["Green intensity"] = ledData[addressValue].g_intensity;
-          doc["Blue status"] = ledData[addressValue].b_status;
-          doc["Blue intensity"] = ledData[addressValue].b_intensity;
-          Serial.print(F("Stream..."));
-          String buf;
-          serializeJson(doc, buf);
-          server.send(200, F("application/json"), buf);
-          Serial.print(F("done."));
-      }
-      else{
-          generateReturnError("KO","LED offline");
-      }
-    }
-    else{
-      generateReturnError("KO","Invalid args");
-    }
-}
-/*
-void enableLED() {
-    DynamicJsonDocument doc(512);
-    String address;
-    if (server.hasArg("address")) {
-      address = server.arg("address");
-      int addressValue=address.toInt();  
-      if(addressValue >
-      ledData[addressValue].ledConnectionStatus = ON;
-    else{
-      generateReturnError("KO","Invalid args");
-    }
-}
-*/
-//serve hello world
-void getHelloWorld() {
-    DynamicJsonDocument doc(512);
-    doc["name"] = "Hello world";
-  
-    Serial.print(F("Stream..."));
-    String buf;
-    serializeJson(doc, buf);
-    server.send(200, "application/json", buf);
-    Serial.print(F("done."));
-}
 
 // Define routing
 void restServerRouting() {
@@ -344,15 +112,13 @@ void restServerRouting() {
                   F("Welcome to the REST Web Server"));
     });
     //edit here to have the sub root folder
-    //server.on(F("/v1/getCurrent"), HTTP_GET, getCurrent);
-    //server.on(F("/v1/getVoltage"), HTTP_GET, getVoltage);
-    //server.on(F("/v1/getLEDStatus"), HTTP_GET, getLEDStatus);
+    //GET
     server.on(F("/v1/get_electrical_parameter"), HTTP_GET, getElectricalParameter);
-
-    //v1
-    //server.on(F("/v1/setLED"), HTTP_POST, setLED);
-    //server.on(F("/v1/setIntensity"), HTTP_POST, setIntensity);
+    server.on(F("/v1/get_properties"), HTTP_GET, getProperties);
+    //POST
     server.on(F("/v1/set_led_node"), HTTP_POST, setLedNode);
+    server.on(F("/v1/set_time"), HTTP_POST, setTime);
+    server.on(F("/v1/set_properties"), HTTP_POST, setProperties);
 }
 
 // Manage not found URL
@@ -401,14 +167,10 @@ void setup(void) {
     // Set not found response
     server.onNotFound(handleNotFound);
     // Start server
-    
     server.begin();
     Serial.println("HTTP server started");
 }
-int potValue = 0;
+
 void loop(void) {
     server.handleClient();
-    //potValue = analogRead(35);
-    //Serial.println(potValue);
-    //delay(500);
 }

@@ -1,5 +1,5 @@
-#ifndef LedStruct_h
-#define LedStruct_h
+#ifndef _LedStruct_h
+#define _LedStruct_h
 
 typedef enum{
   OFF,ON
@@ -21,6 +21,12 @@ struct LedStruct {
   int r_intensity;
   int g_intensity;
   int b_intensity;
+};
+
+typedef struct ControllerProperties ControllerProperties;
+struct ControllerProperties {
+  int tagWithTime;
+  int overHeatingRecovery;
 };
 
 #endif // LedStruct_h
