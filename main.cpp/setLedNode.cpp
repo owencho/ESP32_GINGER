@@ -146,6 +146,7 @@ void setLedNode() {
           }
       }
        //create return json data
+        //delay(3000);
         generateReturnMessage(200,"OK");
     }
     else {

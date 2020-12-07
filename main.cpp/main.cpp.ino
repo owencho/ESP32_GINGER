@@ -23,7 +23,7 @@ const char* password = "Bottas4LifeVB77";
 set<int> ledSet;
 WebServer server(80);
 ControllerProperties ledControllerProperties;
-
+/*
 void getLedNode(){
     DynamicJsonDocument doc(512);
     doc["status"][0] = 1;
@@ -35,7 +35,7 @@ void getLedNode(){
     server.send(200, F("application/json"), buf);
     Serial.print(F("done. \n"));
 }
-
+*/
 // Define routing
 void restServerRouting() {
   server.on("/", HTTP_GET, []() {
@@ -47,7 +47,7 @@ void restServerRouting() {
   server.on(F("/v1/get_electrical_parameter"), HTTP_GET, getElectricalParameter);
   server.on(F("/v1/get_temperature"), HTTP_GET, getLEDTemp);
   server.on(F("/v1/get_properties"), HTTP_GET, getProperties);
-  server.on(F("/v1/get_led_node"), HTTP_GET, getLedNode);
+  //server.on(F("/v1/get_led_node"), HTTP_GET, getLedNode);
   //POST
   server.on(F("/v1/set_led_node"), HTTP_POST, setLedNode);
   server.on(F("/v1/set_time"), HTTP_POST, setTime);
@@ -88,7 +88,7 @@ void setup(void) {
   Serial.println(ssid);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
-  
+  //Serial1.begin(9600, SERIAL_8N1, 3, 1);
   //create root for json
   //set pin 2 LED as output
   pinMode(2, OUTPUT);

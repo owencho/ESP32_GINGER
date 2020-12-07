@@ -55,6 +55,7 @@ void setTime() {
       int t = time[2]+(time[1]+time[0]*60)*60;
       struct timeval now = { .tv_sec = t };
       settimeofday(&now, NULL);
+      //delay(3000);
       generateReturnMessage(200,"OK");
     }
   }
