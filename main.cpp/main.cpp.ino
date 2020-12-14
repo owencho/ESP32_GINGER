@@ -1,5 +1,15 @@
 //include file
+extern "C"{
+#include "Event.h"
+#include "CommEventQueue.h"
+#include "StateMachine.h"
+#include "UsartHardware.h"
+#include "UsartDriver.h"
+#include "EventQueue.h"
+};
+
 #include "Arduino.h"
+#include "ArduinoTXRX.h"
 #include "GetTemp.h"
 #include "LedStruct.h"
 #include "Esp.h"
@@ -8,6 +18,7 @@
 #include "LedNodeProperties.h"
 #include "LedTime.h"
 #include "getElectricalParameter.h"
+
 #include <time.h>
 #include <sys/time.h>
 #include <WiFiClient.h>
@@ -16,10 +27,11 @@
 #include <ArduinoJson.h>
 #include <iterator>
 #include <set>
-
+#include "Ticker.h"
 using namespace std;
 const char* ssid = "VB77";
 const char* password = "Bottas4LifeVB77";
+Ticker timer1;
 set<int> ledSet;
 WebServer server(80);
 ControllerProperties ledControllerProperties;
@@ -77,33 +89,42 @@ void setup(void) {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   Serial.println("");
-  
+
   // Wait for connection
+
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
+
   Serial.println("");
   Serial.print("Connected to ");
   Serial.println(ssid);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
-  //Serial1.begin(9600, SERIAL_8N1, 3, 1);
+  Serial2.begin(9600, SERIAL_8N1, 16, 17);
   //create root for json
+  //pin for rs485
+  pinMode(21, OUTPUT);
+  pinMode(19, OUTPUT);
   //set pin 2 LED as output
   pinMode(2, OUTPUT);
   pinMode(32, OUTPUT);
   pinMode(33, OUTPUT);
+  //set tx mode
+  setTxRS485();
   // Set server routing
   restServerRouting();
-  
+
   // Set not found response
   server.onNotFound(handleNotFound);
   // Start server
   server.begin();
   Serial.println("HTTP server started");
+  usartInit();
 }
 
 void loop(void) {
+  Serial2.write(0xAA);
   server.handleClient();
 }

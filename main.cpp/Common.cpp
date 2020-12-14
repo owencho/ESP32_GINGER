@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include "Common.h"
 #include <ArduinoJson.h>
+#include <WebServer.h>
 extern WebServer server;
 
 void generateReturnMessage(int statusCode , char * message){
