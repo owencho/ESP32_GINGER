@@ -203,9 +203,9 @@ uint8_t txPacket[32];
 int setLedLightIntensity(String ledColor,int intensity,int address){
     uint8_t * packet;
     if (intensity < 256 && intensity >= 0){
-        txPacket[1] = SET_INTENSITY_CMD;
-        txPacket[2] = intensity;
-        packet = transmitAndReceivePacket(3,txPacket,address);
+        txPacket[0] = 1; //Command
+        txPacket[1] = (uint8_t)intensity;
+        packet = transmitAndReceivePacket(2,&txPacket[0],address);
         Serial.print(F("\n"));
         Serial.print(ledColor);
         Serial.print(F(" Intensity : "));

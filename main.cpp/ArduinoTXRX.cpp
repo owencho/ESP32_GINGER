@@ -28,18 +28,19 @@ uint8_t retryCommand;
 uint8_t * transmitAndReceivePacket(int size,uint8_t *data,int address){
     uint8_t rxByte;
     transmitPacket(size,data,address);
-    timer1.attach_ms(1000, reTransmitPacket);
-    setRxRS485();
+    timer1.attach_ms(5000, reTransmitPacket);
     while(!getPacketFromSlaves()){
-        rxByte = Serial2.read();
-        if(rxByte != -1){
+        if(Serial2.available() >0 ){
+          rxByte = Serial2.read();
+          Serial.println(F("received"));
+          Serial.println(rxByte,HEX);
           usartReceiveHardwareHandler(MAIN_CONTROLLER,rxByte);
         }
+        
         if(retryCommand){
             if(retryCounter < 2){
                 transmitPacket(size,data,address);
-                setRxRS485();
-                Serial.print(F("resent"));
+                Serial.println(F("resent"));
                 retryCommand =0;
                 retryCounter++;
             }
@@ -47,6 +48,7 @@ uint8_t * transmitAndReceivePacket(int size,uint8_t *data,int address){
                 retryCommand =0;
                 retryCounter = 0;
                 timer1.detach();
+                setTxRS485();
                 return NULL;
             }
         }
@@ -54,6 +56,7 @@ uint8_t * transmitAndReceivePacket(int size,uint8_t *data,int address){
     retryCommand = 0;
     retryCounter = 0;
     timer1.detach();
+    setTxRS485();
     return getPacketFromSlaves();
 }
 
@@ -64,11 +67,14 @@ void transmitPacket(int size,uint8_t *data,int address){
     while(!isTransmitLastByte()){
         txByte = usartTransmitHardwareHandler(MAIN_CONTROLLER);
         //Serial.print(isTransmitLastByte());
-        Serial.print(txByte);
+        Serial.println(txByte,HEX);
         Serial2.write(txByte);
     }
+    delay(10);
+    setRxRS485();
     resetIsTransmitLastByte();
-    Serial.print(F("successfully sent"));
+    Serial.println(F("successfully sent"));
+    
 }
 
 void reTransmitPacket(){
@@ -77,9 +83,7 @@ void reTransmitPacket(){
 
 void setRxRS485(){
     digitalWrite(21, LOW);
-    digitalWrite(32,HIGH);
 }
 void setTxRS485(){
     digitalWrite(21, HIGH);
-    digitalWrite(32,LOW);
 }

@@ -122,7 +122,7 @@ void setup(void) {
 }
 int rxByte;
 void loop(void) {
-  Serial2.write(0xAA);
+  //Serial2.write(170);
   server.handleClient();
   
 }
