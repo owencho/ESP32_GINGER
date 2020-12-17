@@ -102,15 +102,12 @@ void setup(void) {
   Serial.println(ssid);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
+
   Serial2.begin(9600, SERIAL_8N1, 16, 17);
   //create root for json
   //pin for rs485
-  pinMode(21, OUTPUT);
-  pinMode(19, OUTPUT);
-  //set pin 2 LED as output
-  pinMode(2, OUTPUT);
   pinMode(32, OUTPUT);
-  pinMode(33, OUTPUT);
+  pinMode(21, OUTPUT);
   //set tx mode
   setTxRS485();
   // Set server routing
@@ -123,8 +120,9 @@ void setup(void) {
   Serial.println("HTTP server started");
   usartInit();
 }
-
+int rxByte;
 void loop(void) {
   Serial2.write(0xAA);
   server.handleClient();
+  
 }

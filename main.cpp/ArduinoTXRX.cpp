@@ -28,7 +28,7 @@ uint8_t retryCommand;
 uint8_t * transmitAndReceivePacket(int size,uint8_t *data,int address){
     uint8_t rxByte;
     transmitPacket(size,data,address);
-    timer1.attach_ms(200, reTransmitPacket);
+    timer1.attach_ms(1000, reTransmitPacket);
     setRxRS485();
     while(!getPacketFromSlaves()){
         rxByte = Serial2.read();
@@ -59,12 +59,12 @@ uint8_t * transmitAndReceivePacket(int size,uint8_t *data,int address){
 
 void transmitPacket(int size,uint8_t *data,int address){
     uint8_t txByte;
+    setTxRS485();
     usartDriverTransmit(MAIN_CONTROLLER,address,size,data,NULL);
     while(!isTransmitLastByte()){
-        digitalWrite(21, HIGH);
-        digitalWrite(19,LOW);
         txByte = usartTransmitHardwareHandler(MAIN_CONTROLLER);
-        Serial.print(isTransmitLastByte());
+        //Serial.print(isTransmitLastByte());
+        Serial.print(txByte);
         Serial2.write(txByte);
     }
     resetIsTransmitLastByte();
@@ -77,9 +77,9 @@ void reTransmitPacket(){
 
 void setRxRS485(){
     digitalWrite(21, LOW);
-    digitalWrite(19,HIGH);
+    digitalWrite(32,HIGH);
 }
 void setTxRS485(){
     digitalWrite(21, HIGH);
-    digitalWrite(19,LOW);
+    digitalWrite(32,LOW);
 }
