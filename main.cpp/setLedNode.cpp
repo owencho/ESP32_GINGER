@@ -212,6 +212,14 @@ int setLedLightIntensity(String ledColor,int intensity,int address){
         Serial.print(intensity);
         Serial.print(F(" On address "));
         Serial.print(address);
+        if(packet){
+          Serial.println(packet[0]);
+          Serial.println(packet[1]);
+          Serial.println(packet[2]);
+          Serial.println(packet[3]);
+          Serial.println(packet[4]);
+          Serial.println(packet[5]);
+        }
         if (packet){
           return 1;
         }

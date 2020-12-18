@@ -103,6 +103,10 @@ void setup(void) {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
+  if(!MDNS.begin("esp32")) {
+       Serial.println("Error starting mDNS");
+       return;
+  }
   Serial2.begin(9600, SERIAL_8N1, 16, 17);
   //create root for json
   //pin for rs485
