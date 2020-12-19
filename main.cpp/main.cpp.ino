@@ -132,12 +132,13 @@ void setup(void) {
   }
   //configureUART2();
   Serial2.begin(9600, SERIAL_8N1, 16, 17);
+  pinMode (17 , INPUT_PULLUP);
   //create root for json
   //pin for rs485
   pinMode(32, OUTPUT);
   pinMode(21, OUTPUT);
   //set tx mode
-  setTxRS485();
+  setRxRS485();
   // Set server routing
   restServerRouting();
 
@@ -150,6 +151,11 @@ void setup(void) {
 }
 int rxByte;
 void loop(void) {
+      if (Serial2.available() > 0 ) {
+      rxByte = Serial2.read();
+      Serial.println(F("received"));
+      Serial.println(rxByte, HEX);
+    }
   //Serial2.write(170);
   server.handleClient();
   

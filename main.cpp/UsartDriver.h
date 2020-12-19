@@ -101,7 +101,7 @@ void freeMemForReceiver(Event * event);
 //removeUSartEvent
 void removeTimerEventFromQueue(Event * event);
 void removeAbortEventFromQueue(UsartEvent * evt);
-
+int getCRCValue();
 uint8_t * getPacketFromSlaves();
 void resetUsartRxBuffer();
 #endif // USARTDRIVER_H

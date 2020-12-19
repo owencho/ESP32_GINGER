@@ -100,6 +100,10 @@ uint8_t usartTransmissionHandler(UsartPort port){
             transmitByte = txBuffer[usartDriverInfo.txCounter];
             usartDriverInfo.txCounter ++;
             usartDriverInfo.txState = TX_SEND_BYTE;
+            if(isLastTxByte(usartDriverInfo)){
+                usartDriverInfo.txCounter = 0;
+                usartDriverInfo.txState = TX_SEND_CRC16;
+            }
             break;
         case TX_SEND_BYTE:
             transmitByte = txBuffer[usartDriverInfo.txCounter];
@@ -133,7 +137,7 @@ void usartReceiveHandler(UsartPort port,uint16_t rxByte){
     switch(usartDriverInfo.rxState){
         case RX_IDLE :
             if(eventByte == RX_PACKET_START){
-							resetUsartDriverReceive(port);
+							usartDriverInfo.rxState = RX_ADDRESS_LENGTH;
             }
             break;
         case RX_ADDRESS_LENGTH :
@@ -211,13 +215,14 @@ STATIC void handleCRC16WithStaticBuffer(UsartPort port,uint16_t rxByte){
 				generateEventForReceiveComplete(port);
     }
 }
-
+uint16_t generatedCrc16;
+uint16_t crcRxValue;
 STATIC int checkRxPacketCRC(UsartPort port){
     int rxLength = usartDriverInfo.rxLen;
     uint8_t * rxCRC16ptr = usartDriverInfo.rxCRC16;
     uint8_t * rxBuffer = usartDriverInfo.rxStaticBuffer;
-    uint16_t crcRxValue = *(uint16_t*)&rxCRC16ptr[1] + rxCRC16ptr[0];
-    uint16_t generatedCrc16;
+    crcRxValue = (rxCRC16ptr[0]<<8) + rxCRC16ptr[1];
+    
 
     generatedCrc16=generateCrc16(&rxBuffer[PAYLOAD_OFFSET+1], rxLength-1);
 
@@ -231,7 +236,10 @@ STATIC void generateEventForReceiveComplete(UsartPort port){
         findSMInfoAndGenerateEvent(port);
     }
     else{
-        findSMInfoAndGenerateEvent(port);
+        usartDriverInfo.rxState = RX_IDLE;
+        usartDriverInfo.rxCounter = 0;
+        usartDriverInfo.rxLen = 0;
+        //findSMInfoAndGenerateEvent(port);
     }
 }
 
@@ -241,6 +249,9 @@ STATIC void findSMInfoAndGenerateEvent(UsartPort port){
 		GenericStateMachine *infoSM;
 		char command = rxBuffer[4];
     usartDriverInfo.receivedBuffer = usartDriverInfo.rxStaticBuffer;
+    usartDriverInfo.rxState = RX_IDLE;
+    usartDriverInfo.rxCounter = 0;
+    usartDriverInfo.rxLen = 0;
 }
 
 STATIC void resetUsartDriverReceive(UsartPort port){
@@ -260,6 +271,10 @@ STATIC void generateCRC16forTxPacket(UsartPort port){
 
 uint8_t * getPacketFromSlaves(){
   return usartDriverInfo.receivedBuffer;
+}
+
+int getCRCValue(){
+    return crcRxValue;
 }
 
 void resetUsartRxBuffer(){
