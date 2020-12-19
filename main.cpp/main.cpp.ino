@@ -8,6 +8,7 @@ extern "C"{
 #include "EventQueue.h"
 };
 
+#include "driver/uart.h"
 #include "Arduino.h"
 #include "ArduinoTXRX.h"
 #include "GetTemp.h"
@@ -81,7 +82,29 @@ void handleNotFound() {
   }
   server.send(404, "text/plain", message);
 }
-
+/*
+QueueHandle_t uart_queue;
+void configureUART2(){
+    const int uart_num = UART2;
+    uart_config_t uart_config = {
+    .baud_rate = 9600,
+    .data_bits = UART_DATA_8_BITS,
+    .parity = UART_PARITY_DISABLE,
+    .stop_bits = UART_STOP_BITS_1,
+    .flow_ctrl = UART_HW_FLOWCTRL_CTS_RTS,
+    .rx_flow_ctrl_thresh = 122,
+    };
+    // Configure UART parameters
+    ESP_ERROR_CHECK(uart_param_config(uart_num, &uart_config));
+    //config pin
+    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, 18, 19));
+    //driver installation
+    // Setup UART buffered IO with event queue
+    const int uart_buffer_size = (1024 * 2);
+    // Install UART driver using an event queue here
+    ESP_ERROR_CHECK(uart_driver_install(UART2, uart_buffer_size,uart_buffer_size, 10, &uart_queue, 0));
+}
+*/
 void setup(void) {
   //init usart
   Serial.begin(115200);
@@ -107,6 +130,7 @@ void setup(void) {
        Serial.println("Error starting mDNS");
        return;
   }
+  //configureUART2();
   Serial2.begin(9600, SERIAL_8N1, 16, 17);
   //create root for json
   //pin for rs485

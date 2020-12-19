@@ -58,7 +58,12 @@ void setLedNode() {
                 return;
               }
               else{
-                setLedLightPower(postObj["led_state"]["red"]["power"],33);
+                status =setLedLightPower("red",postObj["led_state"]["red"]["power"]
+                            ,1);
+                if(status == 0){
+                    generateReturnMessage(404,"Address unavailable");
+                    return;
+                }
               }
             }
 
@@ -70,9 +75,10 @@ void setLedNode() {
               else{
                   status =setLedLightIntensity("red",
                                              postObj["led_state"]["red"]["intensity"]
-                                            ,postObj["address"]);
+                                            ,1);
                   if(!status){
                     generateReturnMessage(404,"Address unavailable");
+                    return;
                   }
               }
             }
@@ -97,7 +103,12 @@ void setLedNode() {
                 return;
               }
               else{
-                setLedLightPower(postObj["led_state"]["blue"]["power"],2);
+                status =setLedLightPower("blue", postObj["led_state"]["blue"]["power"]
+                ,2);
+                if(status == 0){
+                  generateReturnMessage(404,"Address unavailable");
+                  return;
+                }
               }
             }
 
@@ -109,9 +120,10 @@ void setLedNode() {
               else{
                 status =setLedLightIntensity("blue",
                                            postObj["led_state"]["blue"]["intensity"]
-                                          ,postObj["address"]);
+                                          ,2);
                 if(!status){
                   generateReturnMessage(404,"Address unavailable");
+                  return;
                 }
               }
             }
@@ -123,7 +135,7 @@ void setLedNode() {
               }
               else{
                 setCutOffTemp("blue",postObj["led_state"]["blue"]["cut_off_temp"]
-                                      ,postObj["address"]);
+                                      ,2);
               }
             }
           }
@@ -135,7 +147,12 @@ void setLedNode() {
                 return;
               }
               else{
-                setLedLightPower(postObj["led_state"]["green"]["power"],32);
+                status =setLedLightPower("green", postObj["led_state"]["green"]["power"]
+                ,3);
+                if(status == 0){
+                  generateReturnMessage(404,"Address unavailable");
+                  return;
+                }
               }
             }
 
@@ -147,9 +164,10 @@ void setLedNode() {
               else{
                 status =setLedLightIntensity("green",
                                            postObj["led_state"]["green"]["intensity"]
-                                          ,postObj["address"]);
+                                          ,3);
                 if(!status){
                   generateReturnMessage(404,"Address unavailable");
+                  return;
                 }
               }
             }
@@ -161,7 +179,7 @@ void setLedNode() {
               }
               else{
                 setCutOffTemp("green",postObj["led_state"]["green"]["cut_off_temp"]
-                              ,postObj["address"]);
+                              ,3);
               }
             }
           }
@@ -174,12 +192,37 @@ void setLedNode() {
     }
   }
 }
-void setLedLightPower(String power,int address){
-  if (power == "ON")
-    digitalWrite(address, HIGH);
-  else if (power == "OFF")
-    digitalWrite(address, LOW);
-  Serial.print(power);
+int setLedLightPower(String ledColor,String power,int address){
+    uint8_t * packet;
+    uint8_t txPacket[2];
+    if (power == "ON")
+      txPacket[1] = 1;
+    else if (power == "OFF")
+      txPacket[1] = 0;
+    else
+      return -1;
+    
+    txPacket[0] = 0; //Command
+    packet = transmitAndReceivePacket(2,&txPacket[0],address);
+    Serial.print(F("\n"));
+    Serial.print(ledColor);
+    Serial.print(F(" Power : "));
+    Serial.print(power);
+    Serial.print(F(" On address "));
+    Serial.print(address);
+    if(packet){
+      Serial.println(packet[0]);
+      Serial.println(packet[1]);
+      Serial.println(packet[2]);
+      Serial.println(packet[3]);
+      Serial.println(packet[4]);
+      Serial.println(packet[5]);
+    }
+    if (packet){
+      resetUsartRxBuffer();
+      return 1;
+    }
+    return 0;
 }
 
 void setCutOffTemp(String ledColor,int cutOffTemp,int address){
@@ -199,13 +242,14 @@ void setLedNodeName(String ledName,int address){
   Serial.print(F(" on Address "));
   Serial.print(address);
 }
-uint8_t txPacket[32];
+
 int setLedLightIntensity(String ledColor,int intensity,int address){
     uint8_t * packet;
+    uint8_t ledIntensityTxPacket[3];
     if (intensity < 256 && intensity >= 0){
-        txPacket[0] = 1; //Command
-        txPacket[1] = (uint8_t)intensity;
-        packet = transmitAndReceivePacket(2,&txPacket[0],address);
+        ledIntensityTxPacket[0] = 1; //Command
+        ledIntensityTxPacket[1] = (uint8_t)intensity;
+        packet = transmitAndReceivePacket(2,&ledIntensityTxPacket[0],address);
         Serial.print(F("\n"));
         Serial.print(ledColor);
         Serial.print(F(" Intensity : "));
@@ -221,6 +265,7 @@ int setLedLightIntensity(String ledColor,int intensity,int address){
           Serial.println(packet[5]);
         }
         if (packet){
+          resetUsartRxBuffer();
           return 1;
         }
         return 0;

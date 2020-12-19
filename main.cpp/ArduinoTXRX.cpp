@@ -28,9 +28,9 @@ uint8_t retryCommand;
 uint8_t * transmitAndReceivePacket(int size, uint8_t *data, int address) {
   uint8_t rxByte;
   transmitPacket(size, data, address);
-  timer1.attach_ms(1000, reTransmitPacket);
+  timer1.attach_ms(2000, reTransmitPacket);
+
   while (!getPacketFromSlaves()) {
-    rxByte = Serial2.read();
     if (Serial2.available() > 0 ) {
       rxByte = Serial2.read();
       Serial.println(F("received"));
