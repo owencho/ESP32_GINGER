@@ -121,8 +121,8 @@ void setup(void) {
   }
 
   Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(ssid);
+  Serial.println("Connected to WiFi");
+  //Serial.println(ssid);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
@@ -138,7 +138,7 @@ void setup(void) {
   pinMode(32, OUTPUT);
   pinMode(21, OUTPUT);
   //set tx mode
-  setRxRS485();
+  setTxRS485();
   // Set server routing
   restServerRouting();
 
@@ -151,11 +151,13 @@ void setup(void) {
 }
 int rxByte;
 void loop(void) {
+  /*
       if (Serial2.available() > 0 ) {
       rxByte = Serial2.read();
       Serial.println(F("received"));
       Serial.println(rxByte, HEX);
     }
+    */
   //Serial2.write(170);
   server.handleClient();
   

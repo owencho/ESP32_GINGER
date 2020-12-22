@@ -64,16 +64,20 @@ void getElectricalParameter() {
     if(addressValue == 1){
       JsonObject root = doc.to<JsonObject>();
       JsonObject red = root.createNestedObject("red");
+      JsonObject blue = root.createNestedObject("blue");
+      JsonObject green = root.createNestedObject("green");
       if(!getElectricParamPacket(1,red)){
         generateReturnMessage(404,"Address unavailable");
         return;
       }
-      doc["green"]["current"]= 50;
-      doc["green"]["voltage"]= 1;
-      doc["green"]["power"]= 50;
-      doc["blue"]["current"]= 50;
-      doc["blue"]["voltage"]= 1;
-      doc["blue"]["power"]= 50;
+      if(!getElectricParamPacket(2,blue)){
+        generateReturnMessage(404,"Address unavailable");
+        return;
+      }
+      if(!getElectricParamPacket(3,green)){
+        generateReturnMessage(404,"Address unavailable");
+        return;
+      }
 
       if(ledControllerProperties.tagWithTime)  
         doc["clock"] =getTimeString();

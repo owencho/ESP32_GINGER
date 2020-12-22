@@ -58,14 +58,20 @@ void getLEDTemp() {
     if(addressValue == 1){
       JsonObject root = doc.to<JsonObject>();
       JsonObject red = root.createNestedObject("red");
+      JsonObject blue = root.createNestedObject("blue");
+      JsonObject green = root.createNestedObject("green");
       if(!getTempPacket(1,red)){
         generateReturnMessage(404,"Address unavailable");
         return;
       }
-      doc["green"]["temp"]= 50;
-      doc["green"]["overheating"]= false;
-      doc["blue"]["temp"]= 20;
-      doc["blue"]["overheating"]= false;
+      if(!getTempPacket(2,blue)){
+        generateReturnMessage(404,"Address unavailable");
+        return;
+      }
+      if(!getTempPacket(3,green)){
+        generateReturnMessage(404,"Address unavailable");
+        return;
+      }
       if(ledControllerProperties.tagWithTime)  
         doc["clock"] =getTimeString();
         

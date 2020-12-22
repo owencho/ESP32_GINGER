@@ -122,8 +122,9 @@ void setLedNode() {
                 return;
               }
               else{
+                int intensity = postObj["led_state"]["blue"]["intensity"];
                 status =setLedLightIntensity("blue",
-                                           postObj["led_state"]["blue"]["intensity"]
+                                           255-intensity
                                           ,2);
                 if(!status){
                   generateReturnMessage(404,"Address unavailable");
@@ -218,10 +219,13 @@ int setLedLightPower(String ledColor,String power,int address){
     
     txPacket[0] = 0; //Command
     packet = transmitAndReceivePacket(2,&txPacket[0],address);
+    /*
     Serial.print(F("\n"));
     Serial.print(ledColor);
     Serial.print(F(" Power : "));
     Serial.print(power);
+    */
+    /*
     if(packet){
       Serial.println(packet[0]);
       Serial.println(packet[1]);
@@ -230,7 +234,9 @@ int setLedLightPower(String ledColor,String power,int address){
       Serial.println(packet[4]);
       Serial.println(packet[5]);
     }
+    */
     if (packet){
+      Serial.println(F("packet received"));
       resetUsartRxBuffer();
       return 1;
     }
@@ -244,10 +250,13 @@ int setCutOffTemp(String ledColor,int cutOffTemp,int address){
     txPacket[0] = 4; //Command
     txPacket[1] = cutOffTemp; 
     packet = transmitAndReceivePacket(2,&txPacket[0],address);
+    /*
     Serial.print(F("\n"));
     Serial.print(ledColor);
     Serial.print(F(" cutOffTemp : "));
     Serial.print(cutOffTemp);
+    */
+    /*
     if(packet){
       Serial.println(packet[0]);
       Serial.println(packet[1]);
@@ -256,6 +265,7 @@ int setCutOffTemp(String ledColor,int cutOffTemp,int address){
       Serial.println(packet[4]);
       Serial.println(packet[5]);
     }
+    */
     if (packet){
       resetUsartRxBuffer();
       return 1;
@@ -280,10 +290,13 @@ int setLedLightIntensity(String ledColor,int intensity,int address){
         ledIntensityTxPacket[0] = 1; //Command
         ledIntensityTxPacket[1] = (uint8_t)intensity;
         packet = transmitAndReceivePacket(2,&ledIntensityTxPacket[0],address);
+        /*
         Serial.print(F("\n"));
         Serial.print(ledColor);
-        Serial.print(F(" Intensity : "));
+        Serial.println(F(" Intensity : "));
         Serial.print(intensity);
+        */
+        /*
         if(packet){
           Serial.println(packet[0]);
           Serial.println(packet[1]);
@@ -292,6 +305,7 @@ int setLedLightIntensity(String ledColor,int intensity,int address){
           Serial.println(packet[4]);
           Serial.println(packet[5]);
         }
+        */
         if (packet){
           resetUsartRxBuffer();
           return 1;
