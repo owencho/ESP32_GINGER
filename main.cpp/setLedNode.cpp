@@ -124,7 +124,7 @@ void setLedNode() {
               else{
                 int intensity = postObj["led_state"]["blue"]["intensity"];
                 status =setLedLightIntensity("blue",
-                                           255-intensity
+                                           intensity
                                           ,2);
                 if(!status){
                   generateReturnMessage(404,"Address unavailable");
